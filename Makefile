@@ -5,8 +5,8 @@ HOST ?= 127.0.0.1
 PORT ?= 5000
 RUN_ARGS ?=
 TEST_ARGS ?=
-MESSAGE ?=
-export MESSAGE REVISION
+m ?=
+export m REVISION
 
 .PHONY: help install env run dev routes shell test typecheck check lock build clean db-migrate db-upgrade db-downgrade db-current db-history db-check
 
@@ -31,9 +31,9 @@ routes: ## Показать маршруты API
 shell: ## Открыть Python-консоль в контексте Flask
 	$(UV) run pulse shell
 
-db-migrate: ## Создать миграцию по моделям (MESSAGE="Описание")
-	@test -n "$$MESSAGE" || { echo 'Укажите описание: make db-migrate MESSAGE="Описание"'; exit 1; }
-	$(UV) run pulse db migrate --message "$$MESSAGE"
+db-migrate: ## Создать миграцию по моделям (m="Описание")
+	@test -n "$$m" || { echo 'Укажите описание: make db-migrate m="Описание"'; exit 1; }
+	$(UV) run pulse db migrate --message "$$m"
 
 db-upgrade: REVISION = head
 db-upgrade: ## Применить миграции (REVISION=head по умолчанию)
