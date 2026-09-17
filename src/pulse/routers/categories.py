@@ -20,10 +20,6 @@ def get_categories():
 @categories_bp.post("")
 def create_category():
     payload = CategoryCreate.model_validate(request.get_json())
-    if db.session.get(Question, payload.question_id) is None:
-        abort(404, description="Question not found")
-    if db.session.scalar(select(Category.id).where(Category.question_id == payload.question_id)) is not None:
-        abort(409, description="Question already has a category")
     record = Category(**payload.model_dump())
     db.session.add(record)
     db.session.commit()
@@ -46,12 +42,6 @@ def update_category(id: int):
     schema = CategoryCreate if request.method == "PUT" else CategoryUpdate
     payload = schema.model_validate(request.get_json())
     changes = payload.model_dump(exclude_unset=True)
-    if "question_id" in changes and db.session.get(Question, changes["question_id"]) is None:
-        abort(404, description="Question not found")
-    if "question_id" in changes and db.session.scalar(
-        select(Category.id).where(Category.question_id == changes["question_id"], Category.id != id)
-    ) is not None:
-        abort(409, description="Question already has a category")
     for name, value in changes.items():
         setattr(record, name, value)
     db.session.commit()
@@ -63,6 +53,8 @@ def delete_category(id: int):
     record = db.session.get(Category, id)
     if record is None:
         abort(404, description="Category not found")
+    if db.session.scalar(select(Question.id).where(Question.category_id == id).limit(1)) is not None:
+        abort(409, description="Reassign or detach related questions first")
     db.session.delete(record)
     db.session.commit()
     return "", 204

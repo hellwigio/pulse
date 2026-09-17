@@ -19,7 +19,7 @@ def client():
 @pytest.mark.parametrize("resource,payload,update", [
     ("questions", {"text": "First question?"}, {"text": "Updated question?"}),
     ("answers", {"is_agree": True, "question_id": 1}, {"is_agree": False}),
-    ("categories", {"name": "General", "question_id": 1}, {"name": "Other"}),
+    ("categories", {"name": "General"}, {"name": "Other"}),
 ])
 def test_crud(client, resource, payload, update):
     if resource != "questions":
@@ -29,6 +29,8 @@ def test_crud(client, resource, payload, update):
     created = client.post(url, json=payload)
     assert created.status_code == 201
     expected = {**payload, "id": created.json["id"]}
+    if resource == "questions":
+        expected.update(category_id=None, category=None)
     assert created.json == expected
     item = f'{url}/{expected["id"]}'
     assert client.get(item).json == expected
@@ -58,7 +60,7 @@ def test_missing_record(client, resource, method):
 @pytest.mark.parametrize("resource,payload,field", [
     ("questions", {"text": "Question?"}, "text"),
     ("answers", {"is_agree": True, "question_id": 1}, "is_agree"),
-    ("categories", {"name": "General", "question_id": 1}, "name"),
+    ("categories", {"name": "General"}, "name"),
 ])
 def test_validation(client, resource, payload, field):
     if resource != "questions":
@@ -83,7 +85,6 @@ def test_validation(client, resource, payload, field):
 
 @pytest.mark.parametrize("resource,payload", [
     ("answers", {"is_agree": False}),
-    ("categories", {"name": "General"}),
 ])
 def test_question_references_and_delete_conflict(client, resource, payload):
     url = f"/{resource}"
@@ -105,19 +106,6 @@ def test_question_references_and_delete_conflict(client, resource, payload):
     assert client.delete(f"/questions/{second}").status_code == 204
 
 
-def test_category_conflicts(client):
-    for name in ["First question?", "Second question?"]:
-        client.post("/questions", json={"text": name})
-    first = client.post("/categories", json={"name": "First", "question_id": 1})
-    assert first.status_code == 201
-    assert client.post("/categories", json={"name": "Duplicate", "question_id": 1}).status_code == 409
-    second = client.post("/categories", json={"name": "Second", "question_id": 2})
-    item = f'/categories/{second.json["id"]}'
-    assert client.patch(item, json={"question_id": 1}).status_code == 409
-    assert client.get(item).json == second.json
-    assert client.patch(item, json={"question_id": 2}).status_code == 200
-
-
 @pytest.mark.parametrize("url,payload", [
     ("/questions", {"text": "  "}),
     ("/questions", {"text": "ab"}),
@@ -133,3 +121,36 @@ def test_trim_question(client):
     response = client.post("/questions", json={"text": "  Question?  "})
     assert response.status_code == 201
     assert response.json["text"] == "Question?"
+
+
+def test_question_categories(client):
+    category = client.post('/categories', json={'name': '  General  '}).json
+    assert category == {'id': 1, 'name': 'General'}
+    for title in ['First question?', 'Second question?']:
+        response = client.post('/questions', json={'text': title, 'category_id': 1})
+        assert response.status_code == 201
+        assert response.json['category'] == category
+        assert response.json['category_id'] == 1
+    assert all(q['category'] == category for q in client.get('/questions').json)
+    assert client.delete('/categories/1').status_code == 409
+    assert client.put('/categories/1', json={'name': 'Updated'}).status_code == 200
+    assert client.get('/questions/1').json['category']['name'] == 'Updated'
+    assert client.patch('/questions/1', json={'category_id': None}).json['category'] is None
+    assert client.patch('/questions/2', json={'text': 'Changed question?'}).json['category_id'] == 1
+    other = client.post('/categories', json={'name': 'Other'}).json
+    assert client.patch('/questions/2', json={'category_id': other['id']}).json['category'] == other
+    assert client.put('/questions/2', json={'text': 'Replacement question?'}).json['category'] is None
+    assert client.delete('/categories/1').status_code == 204
+    assert client.post('/questions', json={'text': 'Categorized?', 'category_id': other['id']}).status_code == 201
+    assert client.delete('/questions/3').status_code == 204
+    assert client.get(f'/categories/{other["id"]}').status_code == 200
+
+
+@pytest.mark.parametrize('category_id,status', [(999, 404), (0, 422), (-1, 422), ('bad', 422)])
+def test_invalid_category_reference(client, category_id, status):
+    assert client.post('/questions', json={'text': 'Question?', 'category_id': category_id}).status_code == status
+    question = client.post('/questions', json={'text': 'Question?'}).json
+    for method in ['put', 'patch']:
+        response = getattr(client, method)('/questions/1', json={'text': 'Changed?', 'category_id': category_id})
+        assert response.status_code == status
+        assert client.get('/questions/1').json == question

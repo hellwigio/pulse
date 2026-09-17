@@ -11,7 +11,7 @@ Accept: application/json
 Content-Type: application/json
 
 {
-  "text": "Кто за трехдневную рабочую неделю?"
+  "text": "Кто за четырехдневную рабочую неделю?"
 }
 
 ### Получить вопрос
@@ -29,7 +29,7 @@ Accept: application/json
 Content-Type: application/json
 
 {
-  "text": "Как добавить вопрос в Pulse?"
+  "text": "Жизнь - тлен?"
 }
 
 ### Обновить вопрос (PATCH)
@@ -38,9 +38,21 @@ Accept: application/json
 Content-Type: application/json
 
 {
-  "text": "Как изменить вопрос в Pulse?"
+  "text": "Вам нравится работать?"
 }
 
 ### Удалить вопрос
 DELETE {{base_url}}/questions/{{question_id}}
 Accept: application/json
+
+### Создать вопрос в категории (категория 1 должна существовать)
+POST {{base_url}}/questions
+Content-Type: application/json
+
+{"text": "Хочешь пива?", "category_id": 1}
+
+### Снять категорию
+PATCH {{base_url}}/questions/{{question_id}}
+Content-Type: application/json
+
+{"category_id": null}
