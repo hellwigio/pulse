@@ -1,0 +1,29 @@
+@base_url = http://127.0.0.1:5000
+@id = 1
+
+### Список
+GET {{base_url}}/categories
+
+### Создать (вопрос 1 должен существовать)
+POST {{base_url}}/categories
+Content-Type: application/json
+
+{"name": "Общие", "question_id": 1}
+
+### Получить
+GET {{base_url}}/categories/{{id}}
+
+### Полностью обновить
+PUT {{base_url}}/categories/{{id}}
+Content-Type: application/json
+
+{"name": "Общие", "question_id": 1}
+
+### Частично обновить
+PATCH {{base_url}}/categories/{{id}}
+Content-Type: application/json
+
+{"name": "Работа"}
+
+### Удалить
+DELETE {{base_url}}/categories/{{id}}

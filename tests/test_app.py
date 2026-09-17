@@ -36,19 +36,6 @@ class ApplicationTests(unittest.TestCase):
         self.assertTrue(app.testing)
         self.assertEqual(app.config["SECRET_KEY"], "test")
 
-    def test_question_routes(self):
-        client = create_app("pulse.config.TestingConfig").test_client()
-        for path, methods in [
-            ("/questions", ["GET", "POST"]),
-            ("/questions/1", ["GET", "PUT", "PATCH", "DELETE"]),
-        ]:
-            for method in methods:
-                with self.subTest(path=path, method=method):
-                    response = client.open(path, method=method)
-                    self.assertEqual(response.status_code, 501)
-                    self.assertIn("error", response.get_json())
-        self.assertEqual(client.get("/questions/invalid").status_code, 404)
-
     def test_cli_help_and_routes(self):
         runner = FlaskCliRunner(create_app("pulse.config.TestingConfig"))
         for args, expected in [

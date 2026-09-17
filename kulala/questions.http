@@ -1,0 +1,46 @@
+@base_url = http://127.0.0.1:5000
+@question_id = 1
+
+### Список вопросов
+GET {{base_url}}/questions
+Accept: application/json
+
+### Создать вопрос
+POST {{base_url}}/questions
+Accept: application/json
+Content-Type: application/json
+
+{
+  "text": "Кто за трехдневную рабочую неделю?"
+}
+
+### Получить вопрос
+GET {{base_url}}/questions/{{question_id}}
+Accept: application/json
+
+
+### Получить второй вопрос
+GET {{base_url}}/questions/2
+Accept: application/json
+
+### Обновить вопрос (PUT)
+PUT {{base_url}}/questions/{{question_id}}
+Accept: application/json
+Content-Type: application/json
+
+{
+  "text": "Как добавить вопрос в Pulse?"
+}
+
+### Обновить вопрос (PATCH)
+PATCH {{base_url}}/questions/{{question_id}}
+Accept: application/json
+Content-Type: application/json
+
+{
+  "text": "Как изменить вопрос в Pulse?"
+}
+
+### Удалить вопрос
+DELETE {{base_url}}/questions/{{question_id}}
+Accept: application/json

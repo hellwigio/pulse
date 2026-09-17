@@ -1,0 +1,29 @@
+@base_url = http://127.0.0.1:5000
+@id = 1
+
+### Список
+GET {{base_url}}/answers
+
+### Создать (вопрос 1 должен существовать)
+POST {{base_url}}/answers
+Content-Type: application/json
+
+{"is_agree": true, "question_id": 1}
+
+### Получить
+GET {{base_url}}/answers/{{id}}
+
+### Полностью обновить
+PUT {{base_url}}/answers/{{id}}
+Content-Type: application/json
+
+{"is_agree": true, "question_id": 1}
+
+### Частично обновить
+PATCH {{base_url}}/answers/{{id}}
+Content-Type: application/json
+
+{"is_agree": false}
+
+### Удалить
+DELETE {{base_url}}/answers/{{id}}

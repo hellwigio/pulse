@@ -2,20 +2,24 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from pulse.extensions import db
+from pulse.extensions import Model
 
 if TYPE_CHECKING:
     from pulse.models.answer import Answer
     from pulse.models.category import Category
 
 
-class Question(db.Model):
+class Question(Model):
     __tablename__ = 'questions'
 
-    id:Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    id:Mapped[int] = mapped_column(primary_key=True, autoincrement=True, init=False)
     text:Mapped[str] = mapped_column(nullable=False)
-    category_id:Mapped[int] = mapped_column(nullable=True)
+    category_id:Mapped[int | None] = mapped_column(nullable=True, default=None)
 
-    answers: Mapped[list[Answer]] = relationship('Answer', back_populates='question')
+    answers: Mapped[list[Answer]] = relationship(
+        'Answer', back_populates='question', init=False, repr=False
+    )
 
-    category:Mapped[Category] = relationship('Category', back_populates='question')
+    category:Mapped[Category] = relationship(
+        'Category', back_populates='question', init=False, repr=False
+    )
